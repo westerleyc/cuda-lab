@@ -1,4 +1,4 @@
-//#include "../common/common.h"
+#include "../common/common.h"
 #include <cuda_runtime.h>
 #include <stdio.h>
 
@@ -61,9 +61,9 @@ int main(int argc, char **argv)
     // set up device
     int dev = 0;
     cudaDeviceProp deviceProp;
-    (cudaGetDeviceProperties(&deviceProp, dev));
+    CHECK(cudaGetDeviceProperties(&deviceProp, dev));
     printf("Using Device %d: %s\n", dev, deviceProp.name);
-    (cudaSetDevice(dev));
+    CHECK(cudaSetDevice(dev));
 
     // set up data size of vectors
     int nElem = 1 << 26;
@@ -91,13 +91,13 @@ int main(int argc, char **argv)
     // malloc device global memory
     float *d_A, *d_B;
     unsigned int *d_C;
-    (cudaMalloc((float**)&d_A, nBytes));
-    (cudaMalloc((float**)&d_B, nBytes));
-    (cudaMalloc((unsigned int**)&d_C, nBytes));
+    CHECK(cudaMalloc((float**)&d_A, nBytes));
+    CHECK(cudaMalloc((float**)&d_B, nBytes));
+    CHECK(cudaMalloc((unsigned int**)&d_C, nBytes));
 
     // transfer data from host to device
-    (cudaMemcpy(d_A, h_A, nBytes, cudaMemcpyHostToDevice));
-    (cudaMemcpy(d_B, h_B, nBytes, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_A, h_A, nBytes, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_B, h_B, nBytes, cudaMemcpyHostToDevice));
   
     // invoke kernel at host side
     int iLen = 512;
@@ -106,13 +106,13 @@ int main(int argc, char **argv)
 
  
     kernel<<<grid, block>>>(d_A, d_B, d_C, nElem);
-    (cudaDeviceSynchronize());
+    CHECK(cudaDeviceSynchronize());
   
-    //  kernel error
-    (cudaGetLastError()) ;
+    // check kernel error
+    CHECK(cudaGetLastError()) ;
 
     // copy kernel result back to host side
-    (cudaMemcpy(gpuRef, d_C, nBytes, cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(gpuRef, d_C, nBytes, cudaMemcpyDeviceToHost));
     float average = 0;
     for (int j=0; j< nElem/1000; j++) {
       float local = 0;
@@ -126,9 +126,9 @@ average = average/(1.0*nElem);
     printf(" vetor %d average cycles= %f\n",nElem,average);
     
     // free device global memory
-    (cudaFree(d_A));
-    (cudaFree(d_B));
-    (cudaFree(d_C));
+    CHECK(cudaFree(d_A));
+    CHECK(cudaFree(d_B));
+    CHECK(cudaFree(d_C));
 
     // free host memory
     free(h_A);
